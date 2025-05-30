@@ -24,7 +24,21 @@ llm_model.to(device)
 
 # Load data
 chunks = json.load(open("chunks.json", "r", encoding="utf-8"))
-index = faiss.read_index("embeddings.index")
+
+index, embeddings = load_embeddings_and_build_index("embeddings.npy")
+
+def load_embeddings_and_build_index(path="embeddings.npy"):
+    # Load embeddings from .npy file
+    embeddings = np.load(path).astype("float32")
+    
+    # Normalize for cosine similarity
+    faiss.normalize_L2(embeddings)
+    
+    # Create FAISS index (cosine similarity via IndexFlatIP)
+    index = faiss.IndexFlatIP(embeddings.shape[1])
+    index.add(embeddings)
+
+    return index, embeddings
 
 # Embedding function
 def get_embedding(text):
